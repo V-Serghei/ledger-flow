@@ -1,5 +1,7 @@
 using Banking.Application.Auth;
 using Banking.Application.Exceptions;
+using Banking.Application.Messaging;
+using Banking.Application.Messaging.IntegrationEvents;
 using Banking.Application.Pix;
 using Banking.Application.Transfers;
 using Banking.Infrastructure.Accounts;
@@ -10,7 +12,8 @@ namespace Banking.Infrastructure.Pix;
 
 internal sealed class PixService(
     BankingDbContext dbContext,
-    ITransferService transferService) : IPixService
+    ITransferService transferService,
+    IOutboxWriter outboxWriter) : IPixService
 {
     private static readonly HashSet<string> SupportedTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -100,7 +103,7 @@ internal sealed class PixService(
                 command.RequesterRole),
             cancellationToken);
 
-        return new PixPaymentResponse(
+        var response = new PixPaymentResponse(
             Guid.NewGuid(),
             transfer.TransferId,
             transfer.SourceAccountId,
@@ -110,6 +113,21 @@ internal sealed class PixService(
             transfer.Status,
             transfer.Description,
             transfer.OccurredOn);
+
+        outboxWriter.Add(
+            new PixPaymentCompletedIntegrationEvent(
+                response.PaymentId,
+                response.TransferId,
+                response.SourceAccountId,
+                response.DestinationAccountId,
+                response.DestinationKey,
+                response.Amount,
+                response.OccurredOn),
+            Guid.NewGuid());
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return response;
     }
 
     private static PixKeyResponse ToResponse(PixKeyRecord pixKey)
@@ -156,4 +174,3 @@ internal sealed class PixService(
         return key.Trim().ToLowerInvariant();
     }
 }
-

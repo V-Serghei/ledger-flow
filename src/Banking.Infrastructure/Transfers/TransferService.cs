@@ -2,6 +2,8 @@ using System.Text.Json;
 using Banking.Application.Abstractions.Persistence;
 using Banking.Application.Auth;
 using Banking.Application.Exceptions;
+using Banking.Application.Messaging;
+using Banking.Application.Messaging.IntegrationEvents;
 using Banking.Application.Transfers;
 using Banking.Domain.Accounts;
 using Banking.Domain.ValueObjects;
@@ -15,7 +17,8 @@ namespace Banking.Infrastructure.Transfers;
 
 internal sealed class TransferService(
     BankingDbContext dbContext,
-    IEventStore eventStore) : ITransferService
+    IEventStore eventStore,
+    IOutboxWriter outboxWriter) : ITransferService
 {
     private const string AggregateType = "Account";
     private const string OperationType = "Transfer";
@@ -94,6 +97,17 @@ internal sealed class TransferService(
             CompletedStatus,
             command.Description ?? string.Empty,
             DateTimeOffset.UtcNow);
+
+        var correlationId = Guid.NewGuid();
+        outboxWriter.Add(
+            new TransferCompletedIntegrationEvent(
+                response.TransferId,
+                response.SourceAccountId,
+                response.DestinationAccountId,
+                response.Amount,
+                response.Description,
+                response.OccurredOn),
+            correlationId);
 
         dbContext.StatementEntriesReadModel.AddRange(
             new StatementEntryReadModel

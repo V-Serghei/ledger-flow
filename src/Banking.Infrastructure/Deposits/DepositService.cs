@@ -3,6 +3,8 @@ using Banking.Application.Abstractions.Persistence;
 using Banking.Application.Auth;
 using Banking.Application.Deposits;
 using Banking.Application.Exceptions;
+using Banking.Application.Messaging;
+using Banking.Application.Messaging.IntegrationEvents;
 using Banking.Domain.Accounts;
 using Banking.Domain.Accounts.Events;
 using Banking.Domain.ValueObjects;
@@ -16,7 +18,8 @@ namespace Banking.Infrastructure.Deposits;
 
 internal sealed class DepositService(
     BankingDbContext dbContext,
-    IEventStore eventStore) : IDepositService
+    IEventStore eventStore,
+    IOutboxWriter outboxWriter) : IDepositService
 {
     private const string AggregateType = "Account";
     private const string OperationType = "Deposit";
@@ -88,6 +91,16 @@ internal sealed class DepositService(
             depositedEvent.BalanceAfter.Amount,
             depositedEvent.Description ?? string.Empty,
             depositedEvent.OccurredOn);
+
+        var correlationId = Guid.NewGuid();
+        outboxWriter.Add(
+            new MoneyDepositedIntegrationEvent(
+                response.AccountId,
+                response.Amount,
+                response.BalanceAfter,
+                response.Description,
+                response.OccurredOn),
+            correlationId);
 
         dbContext.StatementEntriesReadModel.Add(new StatementEntryReadModel
         {
