@@ -1,5 +1,7 @@
 using Banking.Application.Abstractions.Clock;
 using Banking.Application.Abstractions.Persistence;
+using Banking.Application.Auth;
+using Banking.Infrastructure.Auth;
 using Banking.Infrastructure.Clock;
 using Banking.Infrastructure.Persistence;
 using Banking.Infrastructure.Persistence.EventStore;
@@ -22,9 +24,25 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         services.AddScoped<IEventStore, PostgresEventStore>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddSingleton<IRefreshTokenProtector, Sha256RefreshTokenProtector>();
         services.AddSingleton<IClock, SystemClock>();
+
+        services.Configure<JwtOptions>(options =>
+        {
+            var section = configuration.GetSection(JwtOptions.SectionName);
+            options.Issuer = section["Issuer"] ?? string.Empty;
+            options.Audience = section["Audience"] ?? string.Empty;
+            options.SigningKey = section["SigningKey"] ?? string.Empty;
+            options.AccessTokenMinutes = int.TryParse(section["AccessTokenMinutes"], out var accessTokenMinutes)
+                ? accessTokenMinutes
+                : options.AccessTokenMinutes;
+            options.RefreshTokenDays = int.TryParse(section["RefreshTokenDays"], out var refreshTokenDays)
+                ? refreshTokenDays
+                : options.RefreshTokenDays;
+        });
 
         return services;
     }
 }
-
