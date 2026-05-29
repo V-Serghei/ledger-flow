@@ -38,6 +38,20 @@ public sealed class Account
         return account;
     }
 
+    public static Account Rehydrate(IEnumerable<IDomainEvent> events)
+    {
+        var account = new Account();
+
+        foreach (var domainEvent in events)
+        {
+            account.Apply(domainEvent);
+        }
+
+        account.ClearUncommittedEvents();
+
+        return account;
+    }
+
     public void Activate()
     {
         if (Status == AccountStatus.Active)
