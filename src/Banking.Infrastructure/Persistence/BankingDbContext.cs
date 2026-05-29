@@ -1,4 +1,5 @@
 using Banking.Infrastructure.Auth;
+using Banking.Infrastructure.Accounts;
 using Banking.Infrastructure.Persistence.EventStore;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,8 @@ public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options)
     public DbSet<UserRecord> Users => Set<UserRecord>();
 
     public DbSet<RefreshTokenRecord> RefreshTokens => Set<RefreshTokenRecord>();
+
+    public DbSet<AccountReadModel> AccountsReadModel => Set<AccountReadModel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
