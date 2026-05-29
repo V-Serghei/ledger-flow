@@ -246,6 +246,8 @@ The API includes:
 - correlation ID middleware using `X-Correlation-ID`;
 - OpenTelemetry traces and metrics;
 - health checks at `/health/live` and `/health/ready`;
+- Swagger/OpenAPI at `/swagger`;
+- rate limiting with `429 Too Many Requests`;
 - ProblemDetails error responses.
 
 Correlation IDs are propagated through responses, logs, events, and Outbox metadata where applicable.
@@ -282,6 +284,12 @@ Start dependencies and services:
 docker compose up --build
 ```
 
+If a default port is already in use, override it before starting Compose:
+
+```bash
+POSTGRES_PORT=15432 docker compose up --build
+```
+
 Run only the API from source:
 
 ```bash
@@ -295,6 +303,11 @@ dotnet run --project src/Banking.Worker/Banking.Worker.csproj
 ```
 
 The RabbitMQ management UI is exposed by Docker Compose.
+
+Development seeds are applied when `Banking.Api` runs in `Development`:
+
+- `customer@test.com` / `Password123!`
+- `admin@test.com` / `Password123!`
 
 ## How to Run Tests
 

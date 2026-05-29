@@ -17,7 +17,15 @@ public sealed class OutboxPublisherWorker(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await PublishPendingMessagesAsync(stoppingToken);
+            try
+            {
+                await PublishPendingMessagesAsync(stoppingToken);
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(exception, "Outbox publisher iteration failed. The worker will retry.");
+            }
+
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
     }
@@ -83,4 +91,3 @@ public sealed class OutboxPublisherWorker(
         }
     }
 }
-
