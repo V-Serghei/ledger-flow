@@ -1,9 +1,134 @@
 @baseUrl = http://localhost:5000
 @token = replace-me
+@refreshToken = replace-me
 @accountId = replace-me
+@destinationAccountId = replace-me
+@transferId = replace-me
+@pixKey = customer@test.com
 
-### Health placeholder
+### Live Health
 GET {{baseUrl}}/health/live
 
-### Future endpoints will be added as the API milestone is implemented.
+### Ready Health
+GET {{baseUrl}}/health/ready
 
+### Register
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "customer@test.com",
+  "password": "Password123!"
+}
+
+### Login
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@test.com",
+  "password": "Password123!"
+}
+
+### Refresh Token
+POST {{baseUrl}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout
+POST {{baseUrl}}/api/v1/auth/logout
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Open Account
+POST {{baseUrl}}/api/v1/accounts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Main account"
+}
+
+### List Accounts
+GET {{baseUrl}}/api/v1/accounts
+Authorization: Bearer {{token}}
+
+### Get Account
+GET {{baseUrl}}/api/v1/accounts/{{accountId}}
+Authorization: Bearer {{token}}
+
+### Activate Account
+PATCH {{baseUrl}}/api/v1/accounts/{{accountId}}/activate
+Authorization: Bearer {{token}}
+
+### Deactivate Account
+PATCH {{baseUrl}}/api/v1/accounts/{{accountId}}/deactivate
+Authorization: Bearer {{token}}
+
+### Deposit
+POST {{baseUrl}}/api/v1/deposits
+Authorization: Bearer {{token}}
+Idempotency-Key: deposit-001
+Content-Type: application/json
+
+{
+  "accountId": "{{accountId}}",
+  "amount": 100.00,
+  "description": "Initial deposit"
+}
+
+### Transfer
+POST {{baseUrl}}/api/v1/transfers
+Authorization: Bearer {{token}}
+Idempotency-Key: transfer-001
+Content-Type: application/json
+
+{
+  "sourceAccountId": "{{accountId}}",
+  "destinationAccountId": "{{destinationAccountId}}",
+  "amount": 50.00,
+  "description": "Test transfer"
+}
+
+### Get Transfer
+GET {{baseUrl}}/api/v1/transfers/{{transferId}}
+Authorization: Bearer {{token}}
+
+### Register PIX Key
+POST {{baseUrl}}/api/v1/pix/keys
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "accountId": "{{accountId}}",
+  "type": "Email",
+  "key": "{{pixKey}}"
+}
+
+### List PIX Keys
+GET {{baseUrl}}/api/v1/pix/keys
+Authorization: Bearer {{token}}
+
+### Pay PIX
+POST {{baseUrl}}/api/v1/pix/payments
+Authorization: Bearer {{token}}
+Idempotency-Key: pix-001
+Content-Type: application/json
+
+{
+  "sourceAccountId": "{{accountId}}",
+  "destinationKey": "{{pixKey}}",
+  "amount": 25.00,
+  "description": "Simulated PIX payment"
+}
+
+### Statement
+GET {{baseUrl}}/api/v1/accounts/{{accountId}}/statement?page=1&pageSize=20
+Authorization: Bearer {{token}}
