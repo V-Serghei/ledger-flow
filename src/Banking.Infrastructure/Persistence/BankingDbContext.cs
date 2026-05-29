@@ -1,5 +1,6 @@
 using Banking.Infrastructure.Auth;
 using Banking.Infrastructure.Accounts;
+using Banking.Infrastructure.Idempotency;
 using Banking.Infrastructure.Persistence.EventStore;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,8 @@ public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options)
     public DbSet<RefreshTokenRecord> RefreshTokens => Set<RefreshTokenRecord>();
 
     public DbSet<AccountReadModel> AccountsReadModel => Set<AccountReadModel>();
+
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
