@@ -2,6 +2,7 @@ using Banking.Infrastructure.Auth;
 using Banking.Infrastructure.Accounts;
 using Banking.Infrastructure.Idempotency;
 using Banking.Infrastructure.Persistence.EventStore;
+using Banking.Infrastructure.Transfers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Banking.Infrastructure.Persistence;
@@ -17,6 +18,8 @@ public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options)
     public DbSet<AccountReadModel> AccountsReadModel => Set<AccountReadModel>();
 
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
+
+    public DbSet<TransferReadModel> TransfersReadModel => Set<TransferReadModel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -281,6 +281,60 @@ namespace Banking.Infrastructure.Persistence.Migrations
                     b.ToTable("event_store", (string)null);
                 });
 
+            modelBuilder.Entity("Banking.Infrastructure.Transfers.TransferReadModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("description");
+
+                    b.Property<Guid>("DestinationAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("destination_account_id");
+
+                    b.Property<DateTimeOffset>("OccurredOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_on");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<Guid>("SourceAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_account_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinationAccountId")
+                        .HasDatabaseName("ix_transfers_read_model_destination_account_id");
+
+                    b.HasIndex("OwnerUserId")
+                        .HasDatabaseName("ix_transfers_read_model_owner_user_id");
+
+                    b.HasIndex("SourceAccountId")
+                        .HasDatabaseName("ix_transfers_read_model_source_account_id");
+
+                    b.ToTable("transfers_read_model", (string)null);
+                });
+
             modelBuilder.Entity("Banking.Infrastructure.Auth.RefreshTokenRecord", b =>
                 {
                     b.HasOne("Banking.Infrastructure.Auth.UserRecord", "User")
