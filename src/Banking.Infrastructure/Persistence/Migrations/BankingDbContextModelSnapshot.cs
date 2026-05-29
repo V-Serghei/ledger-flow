@@ -281,6 +281,64 @@ namespace Banking.Infrastructure.Persistence.Migrations
                     b.ToTable("event_store", (string)null);
                 });
 
+            modelBuilder.Entity("Banking.Infrastructure.Statements.StatementEntryReadModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("balance_after");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("direction");
+
+                    b.Property<DateTimeOffset>("OccurredOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_on");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operation_id");
+
+                    b.Property<string>("OperationType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("operation_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperationId")
+                        .HasDatabaseName("ix_statement_entries_operation_id");
+
+                    b.HasIndex("AccountId", "OccurredOn")
+                        .HasDatabaseName("ix_statement_entries_account_id_occurred_on");
+
+                    b.ToTable("statement_entries_read_model", (string)null);
+                });
+
             modelBuilder.Entity("Banking.Infrastructure.Transfers.TransferReadModel", b =>
                 {
                     b.Property<Guid>("Id")
