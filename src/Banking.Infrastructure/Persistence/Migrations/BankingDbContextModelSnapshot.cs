@@ -281,6 +281,58 @@ namespace Banking.Infrastructure.Persistence.Migrations
                     b.ToTable("event_store", (string)null);
                 });
 
+            modelBuilder.Entity("Banking.Infrastructure.Pix.PixKeyRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("NormalizedKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_key");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("ix_pix_keys_account_id");
+
+                    b.HasIndex("NormalizedKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_pix_keys_normalized_key");
+
+                    b.HasIndex("OwnerUserId")
+                        .HasDatabaseName("ix_pix_keys_owner_user_id");
+
+                    b.ToTable("pix_keys", (string)null);
+                });
+
             modelBuilder.Entity("Banking.Infrastructure.Statements.StatementEntryReadModel", b =>
                 {
                     b.Property<Guid>("Id")
