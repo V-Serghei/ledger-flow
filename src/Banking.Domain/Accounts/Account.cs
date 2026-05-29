@@ -87,6 +87,30 @@ public sealed class Account
         Raise(new AccountCredited(Id, amount, Balance + amount, description));
     }
 
+    public void TransferTo(Account destination, Money amount, string? description = null)
+    {
+        ArgumentNullException.ThrowIfNull(destination);
+
+        EnsureActive();
+        destination.EnsureActive();
+        EnsureOperationAmount(amount);
+
+        if (Id == destination.Id)
+        {
+            throw new SameAccountTransferException("Source and destination accounts must be different.");
+        }
+
+        if (Balance < amount)
+        {
+            throw new InsufficientFundsException("The account does not have enough balance to complete this operation.");
+        }
+
+        Debit(amount, description);
+        destination.Credit(amount, description);
+
+        Raise(new TransferCompleted(Id, destination.Id, amount, Balance, destination.Balance, description));
+    }
+
     public void ClearUncommittedEvents() => _uncommittedEvents.Clear();
 
     private void EnsureActive()
@@ -148,6 +172,9 @@ public sealed class Account
             case AccountCredited accountCredited:
                 Balance = accountCredited.BalanceAfter;
                 UpdatedAt = accountCredited.OccurredOn;
+                break;
+            case TransferCompleted transferCompleted:
+                UpdatedAt = transferCompleted.OccurredOn;
                 break;
         }
     }
