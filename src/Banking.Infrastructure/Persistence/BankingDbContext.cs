@@ -1,6 +1,7 @@
 using Banking.Infrastructure.Auth;
 using Banking.Infrastructure.Accounts;
 using Banking.Infrastructure.Idempotency;
+using Banking.Infrastructure.Outbox;
 using Banking.Infrastructure.Persistence.EventStore;
 using Banking.Infrastructure.Pix;
 using Banking.Infrastructure.Statements;
@@ -26,6 +27,8 @@ public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options)
     public DbSet<StatementEntryReadModel> StatementEntriesReadModel => Set<StatementEntryReadModel>();
 
     public DbSet<PixKeyRecord> PixKeys => Set<PixKeyRecord>();
+
+    public DbSet<OutboxMessageRecord> OutboxMessages => Set<OutboxMessageRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
