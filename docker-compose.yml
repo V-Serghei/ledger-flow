@@ -1,0 +1,56 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/Banking.Api/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=banking_api;Username=banking;Password=banking
+      Jwt__Issuer: Banking.Api
+      Jwt__Audience: Banking.Api
+      Jwt__SigningKey: local-development-signing-key-change-before-production-123456789
+    ports:
+      - "5000:8080"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/Banking.Worker/Dockerfile
+    environment:
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=banking_api;Username=banking;Password=banking
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: banking_api
+      POSTGRES_USER: banking
+      POSTGRES_PASSWORD: banking
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  postgres_data:
+
