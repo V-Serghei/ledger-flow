@@ -8,6 +8,7 @@ using Banking.Domain.ValueObjects;
 using Banking.Infrastructure.Accounts;
 using Banking.Infrastructure.Idempotency;
 using Banking.Infrastructure.Persistence;
+using Banking.Infrastructure.Statements;
 using Microsoft.EntityFrameworkCore;
 
 namespace Banking.Infrastructure.Transfers;
@@ -93,6 +94,32 @@ internal sealed class TransferService(
             CompletedStatus,
             command.Description ?? string.Empty,
             DateTimeOffset.UtcNow);
+
+        dbContext.StatementEntriesReadModel.AddRange(
+            new StatementEntryReadModel
+            {
+                Id = Guid.NewGuid(),
+                AccountId = source.Id.Value,
+                OperationId = response.TransferId,
+                OperationType = OperationType,
+                Direction = "Debit",
+                Amount = response.Amount,
+                BalanceAfter = source.Balance.Amount,
+                Description = response.Description,
+                OccurredOn = response.OccurredOn
+            },
+            new StatementEntryReadModel
+            {
+                Id = Guid.NewGuid(),
+                AccountId = destination.Id.Value,
+                OperationId = response.TransferId,
+                OperationType = OperationType,
+                Direction = "Credit",
+                Amount = response.Amount,
+                BalanceAfter = destination.Balance.Amount,
+                Description = response.Description,
+                OccurredOn = response.OccurredOn
+            });
 
         dbContext.TransfersReadModel.Add(new TransferReadModel
         {
@@ -203,4 +230,3 @@ internal sealed class TransferService(
         public const int Created = 201;
     }
 }
-

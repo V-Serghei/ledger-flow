@@ -9,6 +9,7 @@ using Banking.Domain.ValueObjects;
 using Banking.Infrastructure.Accounts;
 using Banking.Infrastructure.Idempotency;
 using Banking.Infrastructure.Persistence;
+using Banking.Infrastructure.Statements;
 using Microsoft.EntityFrameworkCore;
 
 namespace Banking.Infrastructure.Deposits;
@@ -87,6 +88,19 @@ internal sealed class DepositService(
             depositedEvent.BalanceAfter.Amount,
             depositedEvent.Description ?? string.Empty,
             depositedEvent.OccurredOn);
+
+        dbContext.StatementEntriesReadModel.Add(new StatementEntryReadModel
+        {
+            Id = Guid.NewGuid(),
+            AccountId = account.Id.Value,
+            OperationId = Guid.NewGuid(),
+            OperationType = OperationType,
+            Direction = "Credit",
+            Amount = response.Amount,
+            BalanceAfter = response.BalanceAfter,
+            Description = response.Description,
+            OccurredOn = response.OccurredOn
+        });
 
         dbContext.IdempotencyRecords.Add(new IdempotencyRecord
         {
