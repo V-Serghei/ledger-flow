@@ -6,6 +6,7 @@ using Banking.Application.Messaging;
 using Banking.Application.Messaging.IntegrationEvents;
 using Banking.Application.Transfers;
 using Banking.Domain.Accounts;
+using Banking.Domain.Exceptions;
 using Banking.Domain.ValueObjects;
 using Banking.Infrastructure.Accounts;
 using Banking.Infrastructure.Idempotency;
@@ -53,7 +54,14 @@ internal sealed class TransferService(
                 ?? throw new InvalidOperationException("Stored idempotency response could not be deserialized.");
         }
 
-        var sourceReadModel = await GetAccountReadModelAsync(command.SourceAccountId, cancellationToken);
+        if (command.SourceAccountId == command.DestinationAccountId)
+        {
+            throw new SameAccountTransferException("Source and destination accounts must be different.");
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var sourceReadModel = await GetAccountReadModelForUpdateAsync(command.SourceAccountId, cancellationToken);
         var destinationReadModel = await GetAccountReadModelAsync(command.DestinationAccountId, cancellationToken);
 
         EnsureCanTransfer(sourceReadModel, command.RequesterUserId, command.RequesterRole);
@@ -67,8 +75,6 @@ internal sealed class TransferService(
         var amount = Money.FromOperationAmount(command.Amount);
 
         source.TransferTo(destination, amount, command.Description);
-
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         await eventStore.AppendAsync(
             source.Id,
@@ -190,6 +196,16 @@ internal sealed class TransferService(
     {
         return await dbContext.AccountsReadModel
             .SingleOrDefaultAsync(account => account.Id == accountId, cancellationToken)
+            ?? throw new NotFoundException("Account was not found.");
+    }
+
+    private async Task<AccountReadModel> GetAccountReadModelForUpdateAsync(
+        Guid accountId,
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.AccountsReadModel
+            .FromSqlInterpolated($"SELECT * FROM accounts_read_model WHERE id = {accountId} FOR UPDATE")
+            .SingleOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("Account was not found.");
     }
 

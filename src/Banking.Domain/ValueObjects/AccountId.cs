@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace Banking.Domain.ValueObjects;
 
 public readonly record struct AccountId
 {
+    [JsonConstructor]
     public AccountId(Guid value)
     {
         if (value == Guid.Empty)
@@ -18,4 +21,3 @@ public readonly record struct AccountId
 
     public override string ToString() => Value.ToString();
 }
-

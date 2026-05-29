@@ -1,5 +1,5 @@
-using Banking.Infrastructure.Auth;
 using Banking.Infrastructure.Accounts;
+using Banking.Infrastructure.Auth;
 using Banking.Infrastructure.Idempotency;
 using Banking.Infrastructure.Outbox;
 using Banking.Infrastructure.Persistence.EventStore;

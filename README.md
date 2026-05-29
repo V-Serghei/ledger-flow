@@ -255,14 +255,11 @@ Correlation IDs are propagated through responses, logs, events, and Outbox metad
 Implemented:
 
 - domain unit tests for money, account lifecycle, deposits, debits, transfers, and domain events;
-- architecture tests enforcing Clean Architecture references.
-
-Planned and in progress:
-
+- architecture tests enforcing Clean Architecture references;
 - Testcontainers integration tests with PostgreSQL, Redis, and RabbitMQ;
+- API integration tests for auth, accounts, deposits, transfers, PIX, statement, and Outbox writes;
 - idempotency integration tests;
-- concurrent transfer tests;
-- Outbox publisher tests.
+- concurrent transfer tests covering the required two-transfer and ten-transfer scenarios.
 
 The most important test proves that concurrent transfers cannot create a negative balance.
 

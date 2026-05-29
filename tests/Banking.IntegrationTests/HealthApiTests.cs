@@ -1,9 +1,10 @@
-using FluentAssertions;
 using Banking.IntegrationTests.Support;
+using FluentAssertions;
 
 namespace Banking.IntegrationTests;
 
-public sealed class HealthApiTests(BankingApiFactory factory) : IClassFixture<BankingApiFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class HealthApiTests(BankingApiFactory factory)
 {
     [Fact]
     public async Task should_return_live_health()

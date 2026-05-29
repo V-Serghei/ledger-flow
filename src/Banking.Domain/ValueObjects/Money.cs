@@ -1,9 +1,11 @@
+using System.Text.Json.Serialization;
 using Banking.Domain.Exceptions;
 
 namespace Banking.Domain.ValueObjects;
 
 public readonly record struct Money : IComparable<Money>
 {
+    [JsonConstructor]
     public Money(decimal amount)
     {
         if (amount < 0)
@@ -44,4 +46,3 @@ public readonly record struct Money : IComparable<Money>
 
     public override string ToString() => Amount.ToString("F2");
 }
-

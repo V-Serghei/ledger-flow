@@ -39,6 +39,15 @@ public sealed class BankingApiFactory : WebApplicationFactory<Program>, IAsyncLi
         await dbContext.Database.MigrateAsync();
     }
 
+    public async Task<T> ExecuteDbContextAsync<T>(
+        Func<BankingDbContext, Task<T>> operation)
+    {
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BankingDbContext>();
+
+        return await operation(dbContext);
+    }
+
     async Task IAsyncLifetime.DisposeAsync()
     {
         await base.DisposeAsync();

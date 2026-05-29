@@ -34,7 +34,7 @@ internal sealed class StatementService(
             ?? throw new InvalidOperationException("Connection string 'Postgres' was not configured.");
 
         await using var connection = new NpgsqlConnection(connectionString);
-        var entries = await connection.QueryAsync<StatementEntryResponse>(
+        var entries = await connection.QueryAsync<StatementEntryRow>(
             new CommandDefinition(
                 """
                 select
@@ -68,7 +68,37 @@ internal sealed class StatementService(
             query.AccountId,
             page,
             pageSize,
-            entries.ToArray());
+            entries.Select(entry => new StatementEntryResponse(
+                entry.Id,
+                entry.AccountId,
+                entry.OperationId,
+                entry.OperationType,
+                entry.Direction,
+                entry.Amount,
+                entry.BalanceAfter,
+                entry.Description,
+                new DateTimeOffset(DateTime.SpecifyKind(entry.OccurredOn, DateTimeKind.Utc))))
+                .ToArray());
+    }
+
+    private sealed class StatementEntryRow
+    {
+        public Guid Id { get; init; }
+
+        public Guid AccountId { get; init; }
+
+        public Guid OperationId { get; init; }
+
+        public string OperationType { get; init; } = string.Empty;
+
+        public string Direction { get; init; } = string.Empty;
+
+        public decimal Amount { get; init; }
+
+        public decimal BalanceAfter { get; init; }
+
+        public string Description { get; init; } = string.Empty;
+
+        public DateTime OccurredOn { get; init; }
     }
 }
-

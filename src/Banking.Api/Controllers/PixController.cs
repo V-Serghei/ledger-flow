@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Banking.Application.Exceptions;
 using Banking.Application.Pix;
 using Banking.Domain.Exceptions;
@@ -117,7 +118,8 @@ public sealed class PixController(IPixService pixService) : ControllerBase
 
     private Guid GetUserId()
     {
-        var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         return Guid.TryParse(sub, out var userId)
             ? userId
@@ -127,7 +129,7 @@ public sealed class PixController(IPixService pixService) : ControllerBase
     private string GetRole()
     {
         return User.FindFirst("role")?.Value
+            ?? User.FindFirst(ClaimTypes.Role)?.Value
             ?? throw new InvalidOperationException("Authenticated user role claim is missing.");
     }
 }
-
