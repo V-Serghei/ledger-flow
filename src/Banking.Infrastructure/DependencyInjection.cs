@@ -2,8 +2,10 @@ using Banking.Application.Abstractions.Clock;
 using Banking.Application.Abstractions.Persistence;
 using Banking.Application.Accounts;
 using Banking.Application.Auth;
+using Banking.Application.Deposits;
 using Banking.Infrastructure.Accounts;
 using Banking.Infrastructure.Auth;
+using Banking.Infrastructure.Deposits;
 using Banking.Infrastructure.Clock;
 using Banking.Infrastructure.Persistence;
 using Banking.Infrastructure.Persistence.EventStore;
@@ -28,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IEventStore, PostgresEventStore>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IDepositService, DepositService>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IRefreshTokenProtector, Sha256RefreshTokenProtector>();
         services.AddSingleton<IClock, SystemClock>();
