@@ -1,5 +1,6 @@
 using Banking.Domain.Accounts.Events;
 using Banking.Domain.Events;
+using Banking.Domain.Exceptions;
 using Banking.Domain.ValueObjects;
 
 namespace Banking.Domain.Accounts;
@@ -57,7 +58,52 @@ public sealed class Account
         Raise(new AccountDeactivated(Id));
     }
 
+    public void Deposit(Money amount, string? description = null)
+    {
+        EnsureActive();
+        EnsureOperationAmount(amount);
+
+        Raise(new MoneyDeposited(Id, amount, Balance + amount, description));
+    }
+
+    public void Debit(Money amount, string? description = null)
+    {
+        EnsureActive();
+        EnsureOperationAmount(amount);
+
+        if (Balance < amount)
+        {
+            throw new InsufficientFundsException("The account does not have enough balance to complete this operation.");
+        }
+
+        Raise(new AccountDebited(Id, amount, Balance - amount, description));
+    }
+
+    public void Credit(Money amount, string? description = null)
+    {
+        EnsureActive();
+        EnsureOperationAmount(amount);
+
+        Raise(new AccountCredited(Id, amount, Balance + amount, description));
+    }
+
     public void ClearUncommittedEvents() => _uncommittedEvents.Clear();
+
+    private void EnsureActive()
+    {
+        if (Status != AccountStatus.Active)
+        {
+            throw new InactiveAccountException("Inactive accounts cannot move money.");
+        }
+    }
+
+    private static void EnsureOperationAmount(Money amount)
+    {
+        if (amount <= Money.Zero)
+        {
+            throw new InvalidMoneyAmountException("Operation amount must be greater than zero.");
+        }
+    }
 
     private void Raise(IDomainEvent domainEvent)
     {
@@ -91,7 +137,18 @@ public sealed class Account
                 Status = AccountStatus.Inactive;
                 UpdatedAt = accountDeactivated.OccurredOn;
                 break;
+            case MoneyDeposited moneyDeposited:
+                Balance = moneyDeposited.BalanceAfter;
+                UpdatedAt = moneyDeposited.OccurredOn;
+                break;
+            case AccountDebited accountDebited:
+                Balance = accountDebited.BalanceAfter;
+                UpdatedAt = accountDebited.OccurredOn;
+                break;
+            case AccountCredited accountCredited:
+                Balance = accountCredited.BalanceAfter;
+                UpdatedAt = accountCredited.OccurredOn;
+                break;
         }
     }
 }
-
