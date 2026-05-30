@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Http.Json;
 using Banking.IntegrationTests.Support;
 using FluentAssertions;
 
@@ -46,5 +48,19 @@ public sealed class AuthApiTests(BankingApiFactory factory)
         response.UserId.Should().Be(registered.UserId);
         response.AccessToken.Should().NotBe(registered.AccessToken);
         response.RefreshToken.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task should_reject_invalid_registration_payload()
+    {
+        using var httpClient = factory.CreateClient();
+
+        var response = await httpClient.PostAsJsonAsync("/api/v1/auth/register", new
+        {
+            email = "not-an-email",
+            password = "short"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }
