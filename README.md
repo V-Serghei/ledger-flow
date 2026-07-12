@@ -290,6 +290,28 @@ If a default port is already in use, override it before starting Compose:
 POSTGRES_PORT=15432 docker compose up --build
 ```
 
+On PowerShell, the following starts an isolated local instance without changing
+the Compose file. It is useful when other learning projects already use the
+default ports:
+
+```powershell
+$env:API_PORT='15000'
+$env:POSTGRES_PORT='15432'
+$env:REDIS_PORT='16379'
+$env:RABBITMQ_PORT='15673'
+$env:RABBITMQ_MANAGEMENT_PORT='15674'
+docker compose up --build -d
+```
+
+Verify the local instance at:
+
+- API health: `http://localhost:15000/health/live`
+- Swagger: `http://localhost:15000/swagger`
+- RabbitMQ management: `http://localhost:15674`
+
+For a recorded, reproducible local validation, see
+[`docs/local-run-evidence.md`](docs/local-run-evidence.md).
+
 Run only the API from source:
 
 ```bash
