@@ -482,3 +482,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Local start script runtime artifacts
+.local-pids/
+.local-logs/
