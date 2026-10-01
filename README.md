@@ -1,8 +1,10 @@
 # Banking API
 
+> **LedgerFlow context:** this repository is evolving from the Banking API fork into LedgerFlow. Start with [`AGENTS.md`](AGENTS.md), [`docs/PRODUCT.md`](docs/PRODUCT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and [`docs/ROADMAP.md`](docs/ROADMAP.md). This README remains a useful inherited overview, but the source-verified architecture document records important qualifications and known gaps.
+
 ## Overview
 
-Banking API is a .NET 8 educational banking system built to demonstrate senior backend engineering practices in a compact, runnable codebase. It uses Clean Architecture, DDD, CQRS, Event Sourcing, Transactional Outbox, idempotent financial operations, optimistic concurrency, observability, integration testing strategy, Docker, and CI/CD automation.
+Banking API is a .NET 8 educational banking system built to demonstrate senior backend engineering practices in a compact, runnable codebase. It uses Clean Architecture, DDD, CQRS, Event Sourcing, Transactional Outbox, idempotent financial operations, optimistic concurrency, observability, integration testing strategy, Docker, and CI automation.
 
 PIX is simulated for educational purposes. The project does not integrate with Banco Central or any real payment network.
 
@@ -28,7 +30,7 @@ flowchart TD
     APP --> DOMAIN[Banking.Domain]
     API --> INFRA[Banking.Infrastructure]
     INFRA --> PG[(PostgreSQL)]
-    INFRA --> REDIS[(Redis)]
+    REDIS[(Redis: provisioned but currently unused)]
     INFRA --> OUTBOX[(Outbox Table)]
     WORKER[Banking.Worker] --> INFRA
     WORKER --> OUTBOX
@@ -51,7 +53,7 @@ The solution is split into:
 - PostgreSQL
 - EF Core
 - Dapper
-- Redis
+- Redis (provisioned by Compose/tests but not used by application code)
 - RabbitMQ
 - MassTransit
 - JWT Bearer
@@ -234,7 +236,7 @@ Redis may be introduced for optimization, but it must not be the only consistenc
 
 ## Outbox Strategy
 
-Application services enqueue integration messages in `outbox_messages` in the same database transaction as the financial operation. `Banking.Worker` publishes pending messages to RabbitMQ through MassTransit, marks successful messages as `Processed`, retries failures, and eventually marks exhausted messages as `Failed`.
+Deposit and transfer services enqueue integration messages in `outbox_messages` in the same database transaction as the financial operation. The PIX-specific completion event is currently saved after the delegated transfer commits and is a known atomicity gap. `Banking.Worker` publishes pending messages to RabbitMQ through MassTransit, marks successful messages as `Processed`, retries failures, and eventually marks exhausted messages as `Failed`.
 
 Command handlers do not publish directly to RabbitMQ.
 
@@ -244,13 +246,13 @@ The API includes:
 
 - Serilog structured logs;
 - correlation ID middleware using `X-Correlation-ID`;
-- OpenTelemetry traces and metrics;
-- health checks at `/health/live` and `/health/ready`;
+- OpenTelemetry ASP.NET Core/HTTP traces exported to the console (metrics are not configured);
+- basic health endpoints at `/health/live` and `/health/ready` (currently equivalent and not dependency-aware);
 - Swagger/OpenAPI at `/swagger`;
 - rate limiting with `429 Too Many Requests`;
 - ProblemDetails error responses.
 
-Correlation IDs are propagated through responses, logs, events, and Outbox metadata where applicable.
+HTTP correlation IDs are propagated through responses and the request log context. Domain-event and Outbox correlation IDs are currently generated separately rather than carrying the HTTP correlation value end to end.
 
 ## Testing Strategy
 
@@ -258,7 +260,7 @@ Implemented:
 
 - domain unit tests for money, account lifecycle, deposits, debits, transfers, and domain events;
 - architecture tests enforcing Clean Architecture references;
-- Testcontainers integration tests with PostgreSQL, Redis, and RabbitMQ;
+- Testcontainers integration fixture with PostgreSQL, Redis, and RabbitMQ; current API behavior tests exercise PostgreSQL, while Redis and worker/RabbitMQ behavior are not yet exercised;
 - API integration tests for auth, accounts, deposits, transfers, PIX, statement, and Outbox writes;
 - idempotency integration tests;
 - concurrent transfer tests covering the required two-transfer and ten-transfer scenarios.
@@ -331,6 +333,8 @@ Development seeds are applied when `Banking.Api` runs in `Development`:
 - `customer@test.com` / `Password123!`
 - `admin@test.com` / `Password123!`
 
+Known issue: seed and login email normalization currently differ, so these documented logins may fail until backlog candidate `LF-101` is completed.
+
 ## How to Run Tests
 
 ```bash
@@ -347,7 +351,7 @@ Run all tests:
 dotnet test
 ```
 
-## CI/CD Pipeline
+## CI Pipeline
 
 GitHub Actions runs:
 
@@ -361,10 +365,10 @@ GitHub Actions runs:
 
 ## Trade-offs
 
-- Event Sourcing is used for financial movements, but the project is still a single deployable system rather than distributed microservices.
+- Event Sourcing is used for financial movements, but the project remains one codebase/system with API and worker processes rather than distributed microservices.
 - Read models are updated inside application flows before introducing a full asynchronous projection pipeline.
 - PIX is simulated to keep scope educational and avoid external regulatory integrations.
-- Redis is present in the architecture for cache, idempotency lookup, rate limiting, and optional lock optimization, but PostgreSQL remains the consistency boundary.
+- Redis is provisioned as a placeholder but has no application integration. PostgreSQL currently stores idempotency data, and rate limiting is in-process; PostgreSQL remains the consistency boundary.
 - The Outbox worker is deliberately simple and can evolve into richer retry policies, dead-letter handling, and observability dashboards.
 
 ## Future Improvements
