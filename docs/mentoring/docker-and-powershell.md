@@ -24,6 +24,20 @@ docker compose build api worker
 
 This is useful after changing Docker base images. A successful build proves that the application can be restored and published inside the selected SDK image, but it does not prove that the containers start correctly.
 
+## Recreate Only the Application Containers
+
+```powershell
+docker compose up -d --no-deps --force-recreate api worker
+```
+
+- `up` — creates or starts the selected services.
+- `-d` — runs the containers in the background.
+- `--no-deps` — leaves PostgreSQL, Redis, and RabbitMQ containers unchanged.
+- `--force-recreate` — replaces existing API and Worker containers even when Compose configuration did not change.
+- `api worker` — limits the operation to the application containers.
+
+This command preserves the PostgreSQL named volume. It is useful after building new application images when old containers are still running the previous runtime.
+
 ## Check Service Status
 
 ```powershell
