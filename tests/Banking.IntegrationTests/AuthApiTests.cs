@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Banking.IntegrationTests.Support;
 using FluentAssertions;
+using Banking.Infrastructure.Seed;
 
 namespace Banking.IntegrationTests;
 
@@ -62,5 +63,24 @@ public sealed class AuthApiTests(BankingApiFactory factory)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task should_login_development_seed_users()
+    {
+        await factory.Services.SeedDevelopmentDataAsync();
+
+        using var httpClient = factory.CreateClient();
+        var api = new BankingApiClient(httpClient);
+
+        var customer = await api.LoginAsync("customer@test.com");
+        var admin = await api.LoginAsync("admin@test.com");
+
+        customer.Email.Should().Be("customer@test.com");
+        customer.Role.Should().Be("Customer");
+        customer.AccessToken.Should().NotBeNullOrWhiteSpace();
+        admin.Email.Should().Be("admin@test.com");
+        admin.Role.Should().Be("Admin");
+        admin.AccessToken.Should().NotBeNullOrWhiteSpace();
     }
 }
