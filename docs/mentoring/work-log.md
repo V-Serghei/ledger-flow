@@ -83,4 +83,15 @@ Applied resolution:
 - Release build completed with zero errors; only the previously identified vulnerability warnings remain.
 - All 49 tests passed: 22 unit, 4 architecture, and 23 integration tests.
 
+Container and existing-database verification:
+
+- Docker images for API and Worker were built from .NET 10 images.
+- Existing containers were initially still running .NET 8, demonstrating that `docker compose build` does not replace running containers.
+- API and Worker were force-recreated without recreating dependency containers or deleting the PostgreSQL volume.
+- The recreated API reported `Microsoft.AspNetCore.App 10.0.12` and `Microsoft.NETCore.App 10.0.12`.
+- The recreated Worker reported `Microsoft.NETCore.App 10.0.12`.
+- PostgreSQL reused the existing `ledger-flow_postgres_data` volume created before the application-container upgrade.
+- EF Core reported that no migrations were required and that the database was already up to date.
+- API and Worker started successfully, and `GET /health/live` returned HTTP `200` with `Healthy`.
+
 After the tests, update platform packages, Docker images, and CI separately. Do not ignore package vulnerabilities, but do not mix their remediation with the initial diagnostic step.
