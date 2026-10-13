@@ -2,7 +2,7 @@
 
 ## Overview
 
-Banking API is a .NET 8 educational banking system built to demonstrate senior backend engineering practices in a compact, runnable codebase. It uses Clean Architecture, DDD, CQRS, Event Sourcing, Transactional Outbox, idempotent financial operations, optimistic concurrency, observability, integration testing strategy, Docker, and CI/CD automation.
+Banking API is a .NET 10 educational banking system built to demonstrate senior backend engineering practices in a compact, runnable codebase. It uses Clean Architecture, DDD, CQRS, Event Sourcing, Transactional Outbox, idempotent financial operations, optimistic concurrency, observability, integration testing strategy, Docker, and CI/CD automation.
 
 PIX is simulated for educational purposes. The project does not integrate with Banco Central or any real payment network.
 
@@ -46,7 +46,7 @@ The solution is split into:
 
 ## Tech Stack
 
-- .NET 8
+- .NET 10
 - ASP.NET Core Web API
 - PostgreSQL
 - EF Core
@@ -64,6 +64,56 @@ The solution is split into:
 - Docker Compose
 - GitHub Actions
 - k6
+
+## Platform Requirements
+
+- The .NET SDK version is selected by [`global.json`](global.json). Install the SDK version declared there or a patch version allowed by its `rollForward` policy.
+- Docker Desktop or Docker Engine with Docker Compose is required for the complete local environment and integration tests.
+- PostgreSQL, Redis, and RabbitMQ do not need to be installed directly when Docker Compose is used.
+
+Verify the selected SDK before restoring the solution:
+
+```bash
+dotnet --version
+```
+
+## .NET 10 Migration Plan
+
+Affected areas:
+
+- `global.json` controls the SDK used by developers and CI;
+- all production and test projects target `net10.0`;
+- API and Worker Dockerfiles use .NET 10 SDK/runtime images;
+- GitHub Actions reads the SDK version from `global.json`;
+- ASP.NET Core authentication, EF Core, Npgsql, Worker hosting, and MVC integration-testing packages use .NET 10-compatible versions.
+
+Dependency decisions:
+
+- platform-coupled Microsoft packages were upgraded to the .NET 10 line;
+- `Microsoft.AspNetCore.Mvc.Testing` was upgraded because the .NET 8 TestHost is incompatible with the .NET 10 JSON pipeline;
+- EF Core relational dependencies are pinned consistently across Infrastructure and Worker;
+- unrelated library major upgrades are intentionally deferred to separate changes.
+
+Known risks and verification:
+
+- integration tests protect authentication and financial behavior against framework regressions;
+- existing PostgreSQL data must be validated by starting the upgraded API and Worker against the existing Compose volume;
+- container startup and CI must remain green in addition to local compilation;
+- dependency vulnerability warnings are tracked separately from the framework migration.
+
+Rollback approach:
+
+- retain the last verified .NET 8 commit and container artifacts until the .NET 10 deployment is validated;
+- revert the .NET 10 migration commits and redeploy the last .NET 8 artifacts if runtime validation fails;
+- preserve or back up the PostgreSQL volume before deployment rollback;
+- this migration does not intentionally add or alter database migrations, so no schema downgrade is expected.
+
+Completed local verification:
+
+- the Release solution build and all 49 tests passed on .NET 10;
+- API and Worker images built successfully from .NET 10 SDK/runtime images;
+- API and Worker started on .NET runtime `10.0.12` while reusing the existing PostgreSQL Compose volume;
+- EF Core reported that the existing database was already up to date, and the API live health endpoint returned HTTP `200`.
 
 ## Why This Architecture?
 
@@ -278,6 +328,8 @@ The `performance` folder contains starter k6 scripts for transfer and statement 
 
 ## How to Run Locally
 
+Confirm that the SDK selected by `global.json` is available, then start the complete environment:
+
 Start dependencies and services:
 
 ```bash
@@ -303,7 +355,13 @@ $env:RABBITMQ_MANAGEMENT_PORT='15674'
 docker compose up --build -d
 ```
 
-Verify the local instance at:
+With default ports, verify the local instance at:
+
+- API health: `http://localhost:5000/health/live`
+- Swagger: `http://localhost:5000/swagger`
+- RabbitMQ management: `http://localhost:15672`
+
+When using the PowerShell port overrides shown above, verify it at:
 
 - API health: `http://localhost:15000/health/live`
 - Swagger: `http://localhost:15000/swagger`
@@ -335,16 +393,16 @@ Development seeds are applied when `Banking.Api` runs in `Development`:
 
 ```bash
 dotnet restore
-dotnet build
-dotnet test tests/Banking.UnitTests/Banking.UnitTests.csproj
-dotnet test tests/Banking.ArchitectureTests/Banking.ArchitectureTests.csproj
-dotnet test tests/Banking.IntegrationTests/Banking.IntegrationTests.csproj
+dotnet build --configuration Release --no-restore
+dotnet test tests/Banking.UnitTests/Banking.UnitTests.csproj --configuration Release --no-build
+dotnet test tests/Banking.ArchitectureTests/Banking.ArchitectureTests.csproj --configuration Release --no-build
+dotnet test tests/Banking.IntegrationTests/Banking.IntegrationTests.csproj --configuration Release --no-build
 ```
 
 Run all tests:
 
 ```bash
-dotnet test
+dotnet test --configuration Release --no-build
 ```
 
 ## CI/CD Pipeline

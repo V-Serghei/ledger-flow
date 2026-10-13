@@ -5,6 +5,7 @@ services:
       dockerfile: src/Banking.Api/Dockerfile
     environment:
       ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=banking_api;Username=banking;Password=banking
       Jwt__Issuer: Banking.Api
       Jwt__Audience: Banking.Api
