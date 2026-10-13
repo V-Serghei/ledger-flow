@@ -35,7 +35,7 @@ public static class DevelopmentDataSeeder
         string email,
         string role)
     {
-        var normalizedEmail = email.ToUpperInvariant();
+        var normalizedEmail = email.ToLowerInvariant();
 
         if (await dbContext.Users.AnyAsync(user => user.NormalizedEmail == normalizedEmail))
         {
