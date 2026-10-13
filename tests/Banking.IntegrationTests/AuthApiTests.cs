@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using Banking.Infrastructure.Seed;
 using Banking.IntegrationTests.Support;
 using FluentAssertions;
-using Banking.Infrastructure.Seed;
 
 namespace Banking.IntegrationTests;
 
